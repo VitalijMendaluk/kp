@@ -105,6 +105,27 @@ input:focus,textarea:focus,select:focus{border-color:var(--gold)}
 .nav button:disabled{opacity:.3;cursor:default}
 .dots{display:flex;gap:7px}.dots span{width:9px;height:9px;border-radius:50%;background:#33323b;cursor:pointer}.dots span.on{background:var(--gold);width:26px;border-radius:99px}
 
+
+/* кейси: попап */
+#case{position:fixed;inset:0;z-index:80;display:none;align-items:center;justify-content:center;background:rgba(3,3,6,.78);backdrop-filter:blur(6px)}
+#case.on{display:flex;animation:fade .3s ease}
+#case .cbox{display:flex;gap:3vh;align-items:center;background:linear-gradient(160deg,#17171f,#0e0e13);border:1px solid rgba(242,196,109,.45);border-radius:3vh;padding:3vh;width:min(92vw,1500px);height:86vh;box-shadow:0 30px 90px rgba(0,0,0,.6)}
+#case .vw{flex:none;height:100%;min-height:0;display:flex;align-items:center;justify-content:center;background:#000;border-radius:2vh;overflow:hidden}
+#case .vw.p{aspect-ratio:9/16}
+#case .vw.l{width:58%;height:auto;max-height:100%;aspect-ratio:16/9}
+#case video{width:100%;height:100%;object-fit:contain;display:block}
+#case .cinfo{flex:1;min-width:0;max-height:100%;overflow:auto;display:flex;flex-direction:column;justify-content:center;gap:2.2vh}
+#case .ck{font:800 1.7vh Manrope,sans-serif;letter-spacing:.16em;color:var(--gold)}
+#case h3{font:700 6vh/1 Oswald,sans-serif}
+#case .ctag{align-self:flex-start;font:800 2vh Manrope,sans-serif;padding:.8vh 1.6vh;border-radius:99px;background:#1d1d26;border:1px solid var(--line)}
+#case .ab{border-radius:2vh;padding:2vh 2.4vh;font:700 2.5vh/1.35 Manrope,sans-serif}
+#case .ab small{display:block;font:800 1.6vh Manrope,sans-serif;letter-spacing:.14em;margin-bottom:.8vh}
+#case .ab.a{background:rgba(255,107,94,.1);border:1px solid rgba(255,107,94,.45)}#case .ab.a small{color:var(--red)}
+#case .ab.b{background:rgba(47,174,71,.12);border:1px solid rgba(47,174,71,.55)}#case .ab.b small{color:var(--green)}
+#case .arrow{text-align:center;font:700 3vh Oswald,sans-serif;color:var(--gold);margin:-1vh 0}
+#case .cx{position:absolute;top:2vh;right:2vh;width:5vh;height:5vh;border-radius:50%;border:1px solid #33323d;background:#16161d;color:var(--ink);font:800 2.2vh Manrope,sans-serif;cursor:pointer}
+.pultdot{position:fixed;left:10px;bottom:10px;width:14px;height:14px;border-radius:50%;background:#2a2a33;opacity:.35;z-index:60;cursor:pointer;border:0}
+.pultdot:hover{opacity:1;background:var(--gold)}
 /* плашка */
 .exrow{display:flex;gap:12px;align-items:center;justify-content:flex-end}
 .exrow .btn.exp{align-self:auto}
@@ -194,6 +215,8 @@ input:focus,textarea:focus,select:focus{border-color:var(--gold)}
 
 </div></div>
 
+<div id="case"><div class="cbox"><div class="vw p" id="vw"><video id="cv" controls playsinline preload="metadata"></video></div><div class="cinfo" id="ci"></div></div><button class="cx" id="cx">✕</button></div>
+<button class="pultdot" id="pultdot" title="Пульт (клавіша P)"></button>
 <div id="kp"><button class="back" id="kpBack">← Назад до розбору</button><iframe id="kpFrame" title="Комерційна пропозиція"></iframe></div>
 
 <script>/*! xlsx.js (C) 2013-present SheetJS -- http://sheetjs.com */
@@ -393,11 +416,80 @@ function toast(html,clear){var t=$('#toast');t.innerHTML=html+(clear?'<button id
 $('#btnExp').onclick=function(e){var p=e.altKey?pickDir():null;(p||Promise.resolve()).then(doExport).then(function(r){toast('<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">✓ Збережено: <b>'+esc(r.name)+'</b></span>',true)})
   .catch(function(err){if(err&&err.name==='AbortError')return;toast('Не вдалося зберегти: '+esc(err&&err.message||err),false)})};
 
+
+/* ---------- КЕЙСИ ---------- */
+var CASE_LOCAL='../../Інфобіз Курс мій/Кейси учнів по тікток/', CASE_WEB='https://vidguki.vercel.app/';
+var CASES=[
+ {file:'case_11.mp4',name:'Світлана',tag:'Фінансовий аналітик · допомога у фінансах',a:'Сильна експертка у фінансах, але клієнтів із соцмереж практично не було.',b:'Стабільно отримує чимало клієнтів саме з ТікТоку — контент почав приводити людей.'},
+ {file:'case_2.mov',name:'Лілія',tag:'Психолог',a:'Взагалі не розуміла, з чого почати. Не було ні плану, ні розуміння, що і як знімати.',b:"З'явилась чітка стратегія та впевненість — тепер веде свій ТікТок системно й без хаосу."},
+ {file:'1.MP4',name:'Альона',tag:'БАДи → Кулінарія',a:'Цілий рік знімала відео в мережевому маркетингу БАДів — результату не було, лише вигорання.',b:'Змінили нішу на кулінарію — те, що їй справді подобається, — і зараз має дуже круті результати.'},
+ {file:'2.mp4',name:'Тетяна',tag:'Лайф-коуч',a:'Не розуміла взагалі, з чого почати.',b:'Стабільно знімає відео і просуває свої послуги через TikTok. Технічно розібралась сама: як монтувати, як виставляти відео й аналізувати їх.'},
+ {file:'3.MP4',name:'Ольга',tag:'Мережевий маркетинг круїзних подорожей',a:'Взагалі не розуміла, як працює TikTok.',b:'Тепер сама знімає відео і отримує з них потенційних клієнтів до себе в команду. Навчилася монтувати відео, перестала боятися камери і зрозуміла, як працюють алгоритми TikTok.'},
+ {file:'video3.mp4',name:'Анна',tag:'Психолог, ментор',a:'Шукала себе і взагалі не вела TikTok.',b:'Знає конкретно, як іти до результату, вже рухається в правильному напрямку і думає над запуском свого онлайн-навчання.'},
+ {file:'4.mp4',name:'Оксана',tag:'Викладач української мови та літератури',a:'Шукала учнів на онлайн-уроки лише по сарафанному радіо.',b:'За допомогою TikTok суттєво збільшила кількість учнів.'},
+ {file:'5.MP4',name:'Ольга',tag:'Мережевий бізнес, БАДи (MLM)',a:'Починала з нуля: TikTok не вела, було лише кілька фотографій.',b:'Стабільно веде TikTok, розуміє алгоритми і як усім керувати, робить монтаж відео й отримує клієнтів.'},
+ {file:'6.MP4',name:'Люба',tag:'Мережевий бізнес',a:'Взагалі не знала, що знімати і як розвивати свої соцмережі.',b:'Повним ходом отримує клієнтів із соцмереж, особливо з TikTok. Додатково підключила Instagram і Facebook.'},
+ {file:'7.MP4',name:'Ірина',tag:'Нумеролог',a:'Не знала, як отримувати клієнтів.',b:'Стабільно веде свій TikTok-акаунт, не боїться камери, сама монтує відео й уже отримує клієнтів із TikTok.'}
+];
+/* що порадити на кожному екрані: [індекс кейсу, коли показувати] */
+var REC={
+ 0:{t:'Знайомство',r:[[3,'Каже «не знаю, з чого почати»'],[1,'Хаос, немає плану і розуміння']]},
+ 1:{t:'Стадія: упаковка, камера, контент',r:[[4,'Боїться камери / не розуміє TikTok'],[9,'Страх камери, не знає, як отримувати клієнтів']]},
+ 2:{t:'Стадія: алгоритми, продажі, системність',r:[[0,'Сильний експерт, але клієнтів із соцмереж немає'],[6,'Клієнти тільки по сарафану']]},
+ 3:{t:'Інструменти',r:[[2,'Не та ніша / вигорання / «знімаю — результату нема»'],[5,'Шукає себе, ще не веде TikTok']]},
+ 4:{t:'Калькулятор — перед КП',r:[[0,'Доказ, що цифри реальні'],[6,'Учні/клієнти з TikTok'],[8,'MLM / мережевий бізнес']]},
+ kp:{t:'Комерційна пропозиція',r:[[0,'Перед ціною: результат'],[6,'Звичайна людина — реальні клієнти'],[8,'Сумнів «чи вийде в мене»']]}
+};
+function caseSrc(c){return [CASE_LOCAL+c.file, CASE_WEB+c.file]}
+function showCase(k){var c=CASES[k],v=$('#cv');v.pause();v.innerHTML=caseSrc(c).map(function(u){return '<source src="'+encodeURI(u)+'">'}).join('');
+  v.poster=encodeURI(CASE_WEB+'preview/'+c.file.replace(/\.[^.]+$/,'')+'.jpg');$('#vw').className='vw p';v.onloadedmetadata=function(){$('#vw').className='vw '+(v.videoWidth>v.videoHeight?'l':'p')};v.load();
+  $('#ci').innerHTML='<div class="ck">КЕЙС УЧНЯ</div><h3>'+c.name+'</h3><span class="ctag">'+c.tag+'</span><div class="ab a"><small>БУЛО</small>'+c.a+'</div><div class="arrow">↓</div><div class="ab b"><small>СТАЛО</small>'+c.b+'</div>';
+  $('#case').classList.add('on');setTimeout(function(){v.play().catch(function(){})},250);renderPult()}
+function closeCase(){var v=$('#cv');v.pause();$('#case').classList.remove('on');renderPult()}
+$('#cx').onclick=closeCase;$('#case').addEventListener('click',function(e){if(e.target.id==='case')closeCase()});
+
+/* ---------- ПУЛЬТ (окреме вікно — бачиш тільки ти) ---------- */
+var PW=null,pq='';
+function openPult(){
+  if(PW&&!PW.closed){PW.focus();return}
+  PW=window.open('','rozbir_pult','width=460,height=860,left=40,top=40');if(!PW)return;
+  var d=PW.document;d.open();d.write('<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Пульт · кейси</title><style>'+
+   'body{margin:0;background:#0b0b0f;color:#f6f3ec;font:600 14px Manrope,system-ui,sans-serif;padding:14px}'+
+   'h1{font:700 18px system-ui;margin:0 0 4px;color:#f2c46d}.sub{color:#a19ea9;font-size:12px;margin-bottom:12px}'+
+   '.sec{font:800 11px system-ui;letter-spacing:.14em;color:#a19ea9;margin:14px 0 6px}'+
+   '.c{display:flex;gap:10px;align-items:center;justify-content:space-between;background:#15151b;border:1px solid #262630;border-radius:12px;padding:9px 10px;margin-bottom:6px}'+
+   '.c b{display:block;font-size:14px}.c span{display:block;color:#a19ea9;font-size:12px}.c i{display:block;font-style:normal;color:#f2c46d;font-size:12px;margin-top:2px}'+
+   '.c button,.top button{flex:none;border:0;border-radius:9px;padding:8px 12px;font:800 13px system-ui;cursor:pointer;background:linear-gradient(90deg,#f2c46d,#d8962f);color:#2a1a02}'+
+   '.rec{border-color:rgba(242,196,109,.55)}input{width:100%;box-sizing:border-box;background:#0f0f14;border:1px solid #2c2c36;border-radius:10px;color:#f6f3ec;padding:9px 11px;font:600 14px system-ui;margin-bottom:8px}'+
+   '.top{display:flex;gap:8px;align-items:center;justify-content:space-between}.top button.x{background:#24242d;color:#f6f3ec}.live{color:#7ee08a;font-size:12px}'+
+   '</style></head><body><div id="r"></div></body></html>');d.close();
+  PW.document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCase()});
+  renderPult();
+}
+function renderPult(){
+  if(!PW||PW.closed)return;var d=PW.document,r=d.getElementById('r');if(!r)return;
+  var kpOn=$('#kp').classList.contains('on'),key=kpOn?'kp':i,rec=REC[key]||{t:'',r:[]},open=$('#case').classList.contains('on');
+  var item=function(k,why,cls){var c=CASES[k];return '<div class="c '+(cls||'')+'"><div><b>'+c.name+'</b><span>'+c.tag+'</span>'+(why?'<i>'+why+'</i>':'')+'</div><button data-show="'+k+'">Показати</button></div>'};
+  var all=CASES.map(function(c,k){return {c:c,k:k}}).filter(function(x){var q=pq.toLowerCase();return !q||(x.c.name+' '+x.c.tag+' '+x.c.a+' '+x.c.b).toLowerCase().indexOf(q)>-1});
+  r.innerHTML='<div class="top"><div><h1>Пульт кейсів</h1><div class="sub">Це вікно бачиш тільки ти — показуй клієнту лише вкладку з розбором</div></div>'+
+   (open?'<button class="x" data-close="1">Закрити кейс</button>':'')+'</div>'+
+   (open?'<div class="live">● Зараз на екрані клієнта відкритий кейс</div>':'')+
+   '<div class="sec">РАДЖУ ЗАРАЗ · '+rec.t.toUpperCase()+'</div>'+rec.r.map(function(x){return item(x[0],x[1],'rec')}).join('')+
+   '<div class="sec">УСІ КЕЙСИ</div><input id="q" placeholder="Пошук: ніша, ім\'я, «камера», «MLM»…" value="'+esc(pq)+'">'+all.map(function(x){return item(x.k,'')}).join('');
+  [].forEach.call(r.querySelectorAll('[data-show]'),function(b){b.onclick=function(){showCase(+b.getAttribute('data-show'))}});
+  var cb=r.querySelector('[data-close]');if(cb)cb.onclick=closeCase;
+  var q=r.querySelector('#q');q.oninput=function(){pq=q.value;var pos=q.selectionStart;renderPult();var q2=d.getElementById('q');q2.focus();q2.setSelectionRange(pos,pos)};
+}
+$('#pultdot').onclick=openPult;
+document.addEventListener('keydown',function(e){var t=(e.target.tagName||'').toLowerCase();if(t==='input'||t==='textarea'||t==='select')return;
+  if($('#case').classList.contains('on')&&(e.key==='Escape'||e.key==='ArrowLeft'||e.key==='ArrowRight')){e.preventDefault();e.stopImmediatePropagation();if(e.key==='Escape')closeCase();return}
+  if(e.code==='KeyP'){e.preventDefault();openPult()}},true);
+
 /* ---------- навігація ---------- */
 var sl=[].slice.call(document.querySelectorAll('.scr')),i=0,dots=$('#dots');
 sl.forEach(function(_,k){var d=document.createElement('span');d.onclick=function(){go(k)};dots.appendChild(d)});
 function go(n){i=Math.max(0,Math.min(sl.length-1,n));sl.forEach(function(s,k){s.classList.toggle('on',k===i)});[].forEach.call(dots.children,function(d,k){d.classList.toggle('on',k===i)});
-  $('#prev').disabled=i===0;$('#next').textContent=i===sl.length-1?'Клієнти з TikTok →':'Далі →';try{history.replaceState(null,'','#'+(i+1))}catch(e){}}
+  $('#prev').disabled=i===0;$('#next').textContent=i===sl.length-1?'Клієнти з TikTok →':'Далі →';try{history.replaceState(null,'','#'+(i+1))}catch(e){}renderPult()}
 $('#prev').onclick=function(){go(i-1)};$('#next').onclick=function(){i===sl.length-1?openKp():go(i+1)};
 document.addEventListener('keydown',function(e){var t=(e.target.tagName||'').toLowerCase();if(t==='input'||t==='textarea'||t==='select')return;
   if($('#kp').classList.contains('on')){if(e.key==='Escape')closeKp();return}
@@ -408,11 +500,11 @@ addEventListener('resize',fit);fit();
 /* ---------- КП: продовження слайдів ---------- */
 var kpLoaded=false;
 function openKp(){if(!kpLoaded){$('#kpFrame').srcdoc=DECK_HTML;kpLoaded=true}else{try{$('#kpFrame').contentWindow.location.hash='#1'}catch(e){}}
-  $('#kp').classList.add('on');setTimeout(function(){try{$('#kpFrame').contentWindow.focus()}catch(e){}},250)}
-function closeKp(){$('#kp').classList.remove('on')}
+  $('#kp').classList.add('on');renderPult();setTimeout(function(){try{$('#kpFrame').contentWindow.focus()}catch(e){}},250)}
+function closeKp(){$('#kp').classList.remove('on');renderPult()}
 $('#kpBack').onclick=closeKp;
 $('#kpFrame').addEventListener('load',function(){try{var w=$('#kpFrame').contentWindow;w.focus();
-  w.document.addEventListener('keydown',function(e){if(e.key==='Escape')closeKp();
+  w.document.addEventListener('keydown',function(e){if(e.code==='KeyP'){openPult();return} if(e.key==='Escape'){if($('#case').classList.contains('on'))closeCase();else closeKp();return}
     if(e.key==='ArrowLeft'||e.key==='Backspace'||e.key==='PageUp'){var on=w.document.querySelector('.slide.on'),first=w.document.querySelector('.slide');if(on===first){closeKp();window.focus()}}},true)}catch(e){}});
 
 function renderAll(){renderIntro();renderComp();renderTools();renderCalc()}
